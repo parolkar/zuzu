@@ -6,6 +6,7 @@ Zuzu is a framework for building privacy-respecting AI desktop assistants that
 run entirely on your machine. No cloud APIs required — your data stays local.
 
 <video src="https://raw.githubusercontent.com/parolkar/zuzu/refs/heads/main/docs/demo/zuzu_quick_demo_01.mp4" controls width="100%"></video>
+[Quick Demo](https://raw.githubusercontent.com/parolkar/zuzu/refs/heads/main/docs/demo/zuzu_quick_demo_01.mp4)
 
 | Component | Technology |
 |-----------|------------|
