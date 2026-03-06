@@ -28,7 +28,7 @@ Gem::Specification.new do |s|
 
   s.metadata = {
     'homepage_uri'    => s.homepage,
-    'source_code_uri' => 'https://github.com/parolkar/zuzu',
+    'source_code_uri' => 'https://github.com/parolkar/zuzu/tree/main',
     'bug_tracker_uri' => 'https://github.com/parolkar/zuzu/issues'
   }
 
@@ -39,7 +39,7 @@ Gem::Specification.new do |s|
 
   s.add_dependency 'glimmer-dsl-swt', '~> 4.30'
   s.add_dependency 'jdbc-sqlite3',    '~> 3.46'
-  s.add_dependency 'webrick',         '>= 1.7'
-  s.add_dependency 'bigdecimal'
-  s.add_dependency 'logger'
+  s.add_dependency 'webrick',         '~> 1.7'
+  s.add_dependency 'bigdecimal',      '~> 3.1'
+  s.add_dependency 'logger',          '~> 1.5'
 end
