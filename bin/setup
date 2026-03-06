@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# bin/setup — one-command bootstrap for Zuzu development.
+# Installs Java 21, JRuby, and gem dependencies.
+set -euo pipefail
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+step() { printf "\n${GREEN}▸ %s${NC}\n" "$1"; }
+warn() { printf "${YELLOW}⚠ %s${NC}\n" "$1"; }
+
+JRUBY_VERSION="10.0.3.0"
+
+# ── Java 21 ──────────────────────────────────────────────────────
+step "Checking Java 21+"
+if java -version 2>&1 | grep -q 'version "2[1-9]\|version "3'; then
+  echo "  Java 21+ found."
+else
+  warn "Java 21+ not found."
+  if [[ "$OSTYPE" == darwin* ]]; then
+    step "Installing Java 21 via Homebrew"
+    brew install openjdk@21
+    echo 'export JAVA_HOME=$(/usr/libexec/java_home -v 21)' >> ~/.zshrc
+    export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+    export PATH="$JAVA_HOME/bin:$PATH"
+    echo "  Installed. Restart your shell or run: source ~/.zshrc"
+  elif [[ "$OSTYPE" == linux-gnu* ]]; then
+    step "Installing Java 21 via apt"
+    sudo apt-get update -qq && sudo apt-get install -y openjdk-21-jdk
+  else
+    echo "  Please install Java 21+ manually: https://adoptium.net"
+    exit 1
+  fi
+fi
+
+# ── rbenv + JRuby ────────────────────────────────────────────────
+step "Checking rbenv"
+if ! command -v rbenv &>/dev/null; then
+  warn "rbenv not found. Installing..."
+  if [[ "$OSTYPE" == darwin* ]]; then
+    brew install rbenv ruby-build
+  else
+    curl -fsSL https://github.com/rbenv/rbenv-installer/raw/HEAD/bin/rbenv-installer | bash
+    export PATH="$HOME/.rbenv/bin:$PATH"
+  fi
+  eval "$(rbenv init - bash 2>/dev/null || rbenv init - zsh 2>/dev/null || true)"
+fi
+
+step "Checking JRuby $JRUBY_VERSION"
+if rbenv versions --bare 2>/dev/null | grep -q "^jruby-${JRUBY_VERSION}$"; then
+  echo "  JRuby $JRUBY_VERSION already installed."
+else
+  step "Installing JRuby $JRUBY_VERSION (this may take a few minutes)"
+  rbenv install --skip-existing "jruby-${JRUBY_VERSION}"
+fi
+
+rbenv local "jruby-${JRUBY_VERSION}"
+eval "$(rbenv init - bash 2>/dev/null || rbenv init - zsh 2>/dev/null || true)"
+
+# ── Gems ─────────────────────────────────────────────────────────
+step "Installing gem dependencies"
+gem install bundler --conservative
+bundle install
+
+# ── Done ─────────────────────────────────────────────────────────
+step "Setup complete!"
+echo ""
+echo "  Ruby:  $(ruby -v)"
+echo "  Java:  $(java -version 2>&1 | head -1)"
+echo ""
+echo "  Next:  Download a llamafile model into models/"
+echo "         Then run:  bin/zuzu start"

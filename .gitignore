@@ -1,0 +1,31 @@
+# Zuzu runtime data
+.zuzu/
+
+# Downloaded LLM models (often 2-4 GB)
+models/*.llamafile
+models/*.gguf
+models/*.bin
+models/*.safetensors
+models/*.q4_0
+models/*.q8_0
+llama.log
+models/llama.log
+
+# Ruby / Bundler
+Gemfile.lock
+vendor/
+.bundle/
+
+# Warbler build output
+*.jar
+*.war
+tmp/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*~
+
+# macOS
+.DS_Store

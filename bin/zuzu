@@ -1,0 +1,88 @@
+#!/usr/bin/env jruby
+# frozen_string_literal: true
+
+$LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
+
+require 'fileutils'
+require 'zuzu'
+
+USAGE = <<~USAGE
+  Zuzu #{Zuzu::VERSION} — local-first agentic desktop framework
+
+  Usage:
+    zuzu new APP_NAME    Scaffold a new Zuzu application
+    zuzu start           Launch the Zuzu app in the current directory
+    zuzu console         Open an IRB session with Zuzu loaded
+    zuzu version         Print the Zuzu version
+    zuzu help            Show this message
+USAGE
+
+# Detect whether we're running from the zuzu source tree (dev mode)
+# by checking if the gemspec exists alongside this script.
+ZUZU_ROOT   = File.expand_path('..', __dir__)
+DEV_MODE    = ENV['ZUZU_DEV'] || File.exist?(File.join(ZUZU_ROOT, 'zuzu.gemspec'))
+
+command = ARGV.shift
+
+case command
+when 'new'
+  app_name = ARGV.shift
+  abort 'Usage: zuzu new APP_NAME' unless app_name
+
+  app_dir = File.expand_path(app_name)
+  abort "Directory '#{app_name}' already exists." if File.exist?(app_dir)
+
+  template_src = File.expand_path('../templates/app.rb', __dir__)
+
+  FileUtils.mkdir_p(app_dir)
+  FileUtils.cp(template_src, File.join(app_dir, 'app.rb'))
+
+  # Generate Gemfile — uses local path when running from source tree,
+  # published gem when installed via `gem install zuzu`.
+  if DEV_MODE
+    zuzu_line = %(gem "zuzu", path: #{ZUZU_ROOT.inspect})
+  else
+    zuzu_line = %(gem "zuzu")
+  end
+
+  File.write(File.join(app_dir, 'Gemfile'), <<~GEMFILE)
+    # frozen_string_literal: true
+    source "https://rubygems.org"
+    #{zuzu_line}
+  GEMFILE
+
+  puts "Created new Zuzu app: #{app_name}/"
+  puts "  #{app_name}/app.rb"
+  puts "  #{app_name}/Gemfile"
+  puts ''
+  if DEV_MODE
+    puts "  (dev mode: Gemfile points to #{ZUZU_ROOT})"
+    puts ''
+  end
+  puts 'Next steps:'
+  puts "  cd #{app_name}"
+  puts '  bundle install'
+  puts '  # Download a llamafile model into models/'
+  puts '  zuzu start'
+
+when 'start'
+  entry = ['app.rb', 'lib/app.rb'].find { |f| File.exist?(f) }
+  abort 'No app.rb found. Run `zuzu start` from your app directory.' unless entry
+  load File.expand_path(entry)
+
+when 'console'
+  require 'irb'
+  puts "Zuzu #{Zuzu::VERSION} console. Type `exit` to quit."
+  IRB.start(__FILE__)
+
+when 'version'
+  puts "zuzu #{Zuzu::VERSION}"
+
+when 'help', nil
+  puts USAGE
+
+else
+  warn "Unknown command: #{command}"
+  puts USAGE
+  exit 1
+end
