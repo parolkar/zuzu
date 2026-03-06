@@ -20,12 +20,9 @@ if java -version 2>&1 | grep -q 'version "2[1-9]\|version "3'; then
 else
   warn "Java 21+ not found."
   if [[ "$OSTYPE" == darwin* ]]; then
-    step "Installing Java 21 via Homebrew"
-    brew install openjdk@21
-    echo 'export JAVA_HOME=$(/usr/libexec/java_home -v 21)' >> ~/.zshrc
-    export JAVA_HOME=$(/usr/libexec/java_home -v 21)
-    export PATH="$JAVA_HOME/bin:$PATH"
-    echo "  Installed. Restart your shell or run: source ~/.zshrc"
+    step "Installing Java 21 via Homebrew (Temurin)"
+    brew install --cask temurin@21
+    echo "  Installed. Restart your shell to pick up JAVA_HOME."
   elif [[ "$OSTYPE" == linux-gnu* ]]; then
     step "Installing Java 21 via apt"
     sudo apt-get update -qq && sudo apt-get install -y openjdk-21-jdk

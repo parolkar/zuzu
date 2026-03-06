@@ -32,7 +32,7 @@ cd zuzu
 bin/setup
 ```
 
-`bin/setup` installs Java 21, JRuby 10.0.4.0, and all gem dependencies
+`bin/setup` installs Java 21, JRuby 10.0.3.0, and all gem dependencies
 automatically. If you prefer manual setup, see [Manual Setup](#manual-setup)
 below.
 
@@ -61,9 +61,11 @@ Edit `app.rb` to point at your model:
 
 ```ruby
 Zuzu.configure do |c|
-  c.app_name       = 'My Assistant'
-  c.llamafile_path = File.expand_path('models/llava-v1.5-7b-q4.llamafile', __dir__)
-  c.db_path        = File.expand_path('.zuzu/zuzu.db', __dir__)
+  c.app_name = 'My Assistant'
+  # Works both when run directly and from a packaged .jar
+  base = __dir__.to_s.start_with?('uri:classloader:') ? Dir.pwd : __dir__
+  c.llamafile_path = File.join(base, 'models', 'llava-v1.5-7b-q4.llamafile')
+  c.db_path        = File.join(base, '.zuzu', 'zuzu.db')
   c.port           = 8080
 end
 ```
@@ -71,16 +73,11 @@ end
 Launch:
 
 ```bash
-# macOS (SWT requires first-thread access):
-JRUBY_OPTS="-J-XstartOnFirstThread -J--enable-native-access=ALL-UNNAMED" bundle exec ruby app.rb
-
-# Linux:
-JRUBY_OPTS="-J--enable-native-access=ALL-UNNAMED" bundle exec ruby app.rb
+bundle exec zuzu start
 ```
 
-You'll see a native desktop window with a file browser on the left and a chat
-interface on the right. The llamafile model starts automatically in the
-background.
+You'll see a native desktop chat window. The llamafile model starts automatically
+in the background. Click **Admin Panel** to browse the AgentFS virtual filesystem.
 
 ---
 
@@ -90,18 +87,14 @@ If `bin/setup` doesn't suit your workflow, follow these steps.
 
 ### 1. Install Java 21+
 
-**macOS (Homebrew):**
+**macOS (Homebrew — recommended):**
 
 ```bash
-brew install openjdk@21
+brew install --cask temurin@21
 ```
 
-Add to your shell profile (`~/.zshrc` or `~/.bash_profile`):
-
-```bash
-export JAVA_HOME=$(/usr/libexec/java_home -v 21)
-export PATH="$JAVA_HOME/bin:$PATH"
-```
+Temurin is the Eclipse/Adoptium OpenJDK distribution. The cask sets up
+`JAVA_HOME` automatically — no manual PATH changes needed.
 
 **macOS (SDKMAN):**
 
@@ -125,17 +118,17 @@ java -version
 # → openjdk version "21.x.x" ...
 ```
 
-### 2. Install JRuby 10.0.4.0 via rbenv
+### 2. Install JRuby 10.0.3.0 via rbenv
 
 ```bash
 # Install rbenv if needed
 brew install rbenv ruby-build   # macOS
 # or: https://github.com/rbenv/rbenv#installation
 
-rbenv install jruby-10.0.4.0
-rbenv local jruby-10.0.4.0
+rbenv install jruby-10.0.3.0
+rbenv local jruby-10.0.3.0
 ruby -v
-# → jruby 10.0.4.0 (ruby 3.x.x) ...
+# → jruby 10.0.3.0 (ruby 3.x.x) ...
 ```
 
 ### 3. Install Gems
@@ -289,14 +282,22 @@ fs.kv_get('last_query')            # → "weather in Tokyo"
 
 ### Packaging as .jar
 
-Use Warbler to create a standalone Java archive:
+Package your app as a standalone Java archive with a single command:
 
 ```bash
-gem install warbler
-warble jar
-java -XstartOnFirstThread -jar zuzu-app.jar   # macOS
-java -jar zuzu-app.jar                        # Linux
+bundle exec zuzu package
 ```
+
+This auto-installs Warbler if needed, generates the necessary launcher, and
+produces a `.jar` named after your app directory. Run it with:
+
+```bash
+java -XstartOnFirstThread -jar my_app.jar   # macOS
+java -jar my_app.jar                        # Linux / Windows
+```
+
+> **Note:** Place your llamafile model in a `models/` directory alongside the
+> `.jar` — models are not bundled into the archive.
 
 ---
 
@@ -323,6 +324,7 @@ end
 ```
 zuzu new APP_NAME    Scaffold a new Zuzu application
 zuzu start           Launch the Zuzu app in the current directory
+zuzu package         Package the app as a standalone .jar
 zuzu console         Open an IRB session with Zuzu loaded
 zuzu version         Print the Zuzu version
 zuzu help            Show this message
