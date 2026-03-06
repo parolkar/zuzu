@@ -1,9 +1,22 @@
 # Zuzu
 
-**Local-first agentic desktop apps with JRuby.**
+**Build AI-native desktop apps that run entirely on the user's machine.**
 
-Zuzu is a framework for building privacy-respecting AI desktop assistants that
-run entirely on your machine. No cloud APIs required — your data stays local.
+Every application you install on an operating system does the same fundamental thing: it translates human intent into OS system calls. A text editor writes bytes to disk. A browser opens network connections. At its core, every installed app is an orchestrator of operating system capabilities.
+
+LLMs are simply a more expressive interface for exactly that orchestration. Zuzu is a framework built on this premise — for developers who want to ship installable, AI-native desktop apps where the intelligence runs on the user's hardware, not in a data center.
+
+**Why does this matter?**
+
+- **Privacy by architecture.** The agent operates inside AgentFS — a sandboxed virtual filesystem backed by a single SQLite file. It cannot touch the host OS unless you explicitly open that door. There is no network call to make, no token to rotate, no terms of service that changes next quarter.
+
+- **Deployable like software, not like a service.** Package your app as a single `.jar`. Users pay, download, double-click, and run. No Docker. No cloud subscription. No infrastructure to maintain. The JVM handles cross-platform distribution the way it has for 30 years.
+
+- **Built for regulated environments.** A therapist keeping session notes, an auditor running confidential analysis, a corporate team in a restricted environment — these are exactly the users who benefit most from powerful AI but are currently blocked by cloud dependency. A bundled LLM in a self-contained Java application needs no external approval to run.
+
+- **Developer experience that matches how software is actually built today.** `zuzu new my_app` scaffolds a project pre-wired for Claude Code: CLAUDE.md, skills for `/setup`, `/add-tool`, `/customize`, and `/debug` — all enforcing Zuzu's patterns. Open the folder, start your coding agent, describe what you want to build.
+
+→ [Why Zuzu exists](docs/why.md) · [Quick Demo](https://raw.githubusercontent.com/parolkar/zuzu/refs/heads/main/docs/demo/zuzu_quick_demo_01.mp4)
 
 <video src="https://raw.githubusercontent.com/parolkar/zuzu/refs/heads/main/docs/demo/zuzu_quick_demo_01.mp4" controls width="100%"></video>
 [Quick Demo](https://raw.githubusercontent.com/parolkar/zuzu/refs/heads/main/docs/demo/zuzu_quick_demo_01.mp4)
