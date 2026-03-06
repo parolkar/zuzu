@@ -11,21 +11,12 @@ module Zuzu
     TOOL_CALL_RE   = /<zuzu_tool_call>(.*?)<\/zuzu_tool_call>/m
     TOOL_RESULT_RE = /<zuzu_tool_result>.*?<\/zuzu_tool_result>/m
 
-    SYSTEM_PROMPT = <<~PROMPT.strip
+    BASE_PROMPT = <<~PROMPT
       You are Zuzu, a helpful desktop AI assistant.
 
       You have access to a sandboxed virtual filesystem called AgentFS. It is completely
       separate from the host computer's filesystem. All file paths refer to AgentFS only.
       You cannot access or modify any files on the host system.
-
-      Available tools — use the tag format shown below:
-
-      - write_file     : Write text to an AgentFS file. Args: path (string), content (string)
-      - read_file      : Read an AgentFS file. Args: path (string)
-      - list_directory : List an AgentFS directory. Args: path (string, default "/")
-      - run_command    : Run a sandboxed command against AgentFS. Args: command (string)
-                         Supported: ls [path], cat <path>, pwd, echo <text>
-      - http_get       : Fetch a public URL from the internet. Args: url (string)
 
       To call a tool, output exactly this on its own line:
       <zuzu_tool_call>{"name":"TOOL_NAME","args":{"key":"value"}}</zuzu_tool_call>
@@ -51,7 +42,7 @@ module Zuzu
       # Only system prompt + current message — no history injected into agent context.
       # Prior non-tool-call responses cause models to skip tool use.
       messages = [
-        { 'role' => 'system', 'content' => SYSTEM_PROMPT },
+        { 'role' => 'system', 'content' => build_system_prompt },
         { 'role' => 'user',   'content' => user_message }
       ]
 
@@ -99,6 +90,22 @@ module Zuzu
     end
 
     private
+
+    def build_system_prompt
+      tool_lines = ToolRegistry.tools.map do |t|
+        args = t.schema[:properties]&.keys&.map(&:to_s)&.join(', ')
+        line = "- #{t.name} : #{t.description}"
+        line += " Args: #{args}" if args && !args.empty?
+        line
+      end.join("\n")
+
+      extras = Zuzu.config.system_prompt_extras.to_s.strip
+
+      prompt = BASE_PROMPT.dup
+      prompt << "\nAvailable tools:\n#{tool_lines}\n"
+      prompt << "\n#{extras}" unless extras.empty?
+      prompt.strip
+    end
 
     def extract_tool_calls(content)
       content.scan(TOOL_CALL_RE).filter_map do |match|

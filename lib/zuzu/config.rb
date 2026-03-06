@@ -11,7 +11,7 @@ module Zuzu
   #
   class Config
     attr_accessor :port, :model, :channels, :log_level, :app_name,
-                  :window_width, :window_height
+                  :window_width, :window_height, :system_prompt_extras
 
     attr_reader :db_path, :llamafile_path
 
@@ -20,8 +20,9 @@ module Zuzu
       @model          = 'LLaMA_CPP'
       @db_path        = File.join('.zuzu', 'zuzu.db')
       @llamafile_path = nil
-      @channels       = []
-      @log_level      = :info
+      @channels             = []
+      @log_level            = :info
+      @system_prompt_extras = nil
       @app_name       = 'Zuzu'
       @window_width   = 860
       @window_height  = 620
