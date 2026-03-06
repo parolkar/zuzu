@@ -371,37 +371,45 @@ Zuzu.configure do |c|
 end
 ```
 
-### Subclassing Zuzu::App for deeper customisation
+### Extending Zuzu::App for deeper customisation
 
-For UI changes beyond config (adding widgets, overriding the admin panel, etc.),
-subclass `Zuzu::App` and call `launch!` on the subclass:
+To override helper methods (e.g. `open_admin_panel`), **reopen `Zuzu::App` directly** —
+do NOT subclass it. Subclassing causes Glimmer to raise
+`Invalid custom widget for having no body!` because `body`, `before_body`, and
+`after_body` are DSL class-level declarations that are not inherited by subclasses.
+
+**Correct pattern — reopen the class:**
 
 ```ruby
-class MyApp < Zuzu::App
-  # Override private helper methods to customise behaviour.
-  # The body { } shell structure is inherited — you can't override it
-  # without redefining the full body, which means copying body from
-  # lib/zuzu/app.rb and modifying it here.
+module Zuzu
+  class App
+    # Override any private helper method here.
+    # @store, @fs, @agent etc. are all available (set up by before_body).
+    def open_admin_panel
+      panel = shell {
+        text 'My Custom Panel'
+        minimum_size 400, 400
+        grid_layout 1, false
+        # ... your widgets here
+      }
+      panel.open
+    end
 
-  # Example: replace the Admin Panel with your own:
-  def open_admin_panel
-    panel = shell {
-      text 'My Custom Panel'
-      minimum_size 400, 400
-      grid_layout 1, false
-      # ... your widgets here
-    }
-    panel.open
+    private
+
+    def my_helper
+      # additional private methods are fine here too
+    end
   end
 end
 
-MyApp.launch!(use_llamafile: true)
+Zuzu::App.launch!(use_llamafile: true)  # always launch on Zuzu::App, not a subclass
 ```
 
-**Note:** `before_body`, `after_body`, and `body` blocks are Glimmer DSL class-level
-declarations. They do not behave like regular Ruby method overrides.
-To fully replace the body, copy the `body { }` block from `lib/zuzu/app.rb`
-into your subclass and modify it.
+**Why not subclass?** `before_body`, `after_body`, and `body` are Glimmer DSL
+declarations stored at the class level. A subclass has none of them, so Glimmer
+refuses to instantiate it with "no body" error. Reopening `Zuzu::App` avoids
+this entirely while still giving full access to all instance variables.
 
 ---
 

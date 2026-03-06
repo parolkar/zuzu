@@ -23,7 +23,8 @@ Gem::Specification.new do |s|
     'bug_tracker_uri' => 'https://github.com/parolkar/zuzu/issues'
   }
 
-  s.files         = Dir['lib/**/*', 'bin/*', 'templates/**/*', 'LICENSE', 'README.md']
+  s.files         = Dir['lib/**/*', 'bin/*', 'templates/**/*', 'LICENSE', 'README.md', 'warble.rb'] +
+                    Dir['templates/.claude/**/*']
   s.executables   = ['zuzu']
   s.require_paths = ['lib']
 

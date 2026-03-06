@@ -39,6 +39,7 @@ when 'new'
   FileUtils.cp(File.join(templates_dir, 'app.rb'),    File.join(app_dir, 'app.rb'))
   FileUtils.cp(File.join(templates_dir, 'AGENTS.md'), File.join(app_dir, 'AGENTS.md'))
   FileUtils.cp(File.join(templates_dir, 'CLAUDE.md'), File.join(app_dir, 'CLAUDE.md'))
+  FileUtils.cp_r(File.join(templates_dir, '.claude'), File.join(app_dir, '.claude'))
 
   # Generate Gemfile — uses local path when running from source tree,
   # published gem when installed via `gem install zuzu`.
@@ -59,6 +60,7 @@ when 'new'
   puts "  #{app_name}/Gemfile"
   puts "  #{app_name}/AGENTS.md"
   puts "  #{app_name}/CLAUDE.md"
+  puts "  #{app_name}/.claude/skills/ (setup, add-tool, customize, debug)"
   puts ''
   if DEV_MODE
     puts "  (dev mode: Gemfile points to #{ZUZU_ROOT})"
@@ -73,6 +75,15 @@ when 'new'
 when 'start'
   entry = ['app.rb', 'lib/app.rb'].find { |f| File.exist?(f) }
   abort 'No app.rb found. Run `zuzu start` from your app directory.' unless entry
+
+  # SWT on Java 21+ requires --enable-native-access=ALL-UNNAMED.
+  # JVM flags must be set before the JVM starts, so re-exec via bundle
+  # with the flag injected into JRUBY_OPTS if it isn't already present.
+  unless ENV['JRUBY_OPTS'].to_s.include?('enable-native-access')
+    ENV['JRUBY_OPTS'] = "#{ENV['JRUBY_OPTS']} -J--enable-native-access=ALL-UNNAMED".strip
+    exec('bundle', 'exec', 'zuzu', 'start')
+  end
+
   load File.expand_path(entry)
 
 when 'package'
