@@ -9,9 +9,9 @@
 
 Warbler::Config.new do |config|
   config.features  = %w[executable]
-  config.dirs      = %w[lib templates models]
+  config.dirs      = %w[lib templates]
   config.includes  = FileList['app.rb', 'Gemfile']
-  config.jar_name  = 'zuzu-app'
+  # models/ is NOT bundled — place model files next to the jar at runtime
 
   # SWT native fragments are pulled in by glimmer-dsl-swt;
   # Warbler bundles them automatically.

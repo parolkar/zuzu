@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
+require_relative 'lib/zuzu/version'
+
 Gem::Specification.new do |s|
   s.name        = 'zuzu'
-  s.version     = '0.0.1'
+  s.version     = Zuzu::VERSION
   s.authors     = ['Abhishek Parolkar']
   s.email       = ['abhishek@parolkar.com']
   s.homepage    = 'https://github.com/parolkar/zuzu'

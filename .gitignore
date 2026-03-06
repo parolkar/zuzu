@@ -1,5 +1,9 @@
 # Zuzu runtime data
 .zuzu/
+my_test_app/
+*.gem
+
+
 
 # Downloaded LLM models (often 2-4 GB)
 models/*.llamafile

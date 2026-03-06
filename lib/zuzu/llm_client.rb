@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'net/http'
+require 'openssl'
 require 'json'
 require 'uri'
 
@@ -12,19 +13,12 @@ module Zuzu
       @port = port
     end
 
-    def chat(messages, temperature: 0.7, max_tokens: 2048)
-      msg = chat_with_tools(messages, [], temperature: temperature)
-      msg['content'].to_s
-    end
-
-    def chat_with_tools(messages, tools, temperature: 0.7)
+    def chat(messages, temperature: 0.1)
       body = {
         model:       Zuzu.config.model,
         messages:    messages,
         temperature: temperature
       }
-      body[:tools] = tools unless tools.empty?
-
       data = post_json('/v1/chat/completions', body)
       msg  = data.dig('choices', 0, 'message')
       strip_eos(msg)
@@ -61,7 +55,8 @@ module Zuzu
       uri = URI("http://#{@host}:#{@port}#{path}")
       req = Net::HTTP::Post.new(uri, 'Content-Type' => 'application/json')
       req.body = JSON.generate(body)
-      res = Net::HTTP.start(uri.host, uri.port, read_timeout: 120) { |http| http.request(req) }
+      res = Net::HTTP.start(uri.host, uri.port, read_timeout: 120,
+                            use_ssl: false) { |http| http.request(req) }
       JSON.parse(res.body)
     end
 

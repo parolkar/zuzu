@@ -12,6 +12,7 @@ USAGE = <<~USAGE
   Usage:
     zuzu new APP_NAME    Scaffold a new Zuzu application
     zuzu start           Launch the Zuzu app in the current directory
+    zuzu package         Package the app as a standalone .jar
     zuzu console         Open an IRB session with Zuzu loaded
     zuzu version         Print the Zuzu version
     zuzu help            Show this message
@@ -69,6 +70,57 @@ when 'start'
   entry = ['app.rb', 'lib/app.rb'].find { |f| File.exist?(f) }
   abort 'No app.rb found. Run `zuzu start` from your app directory.' unless entry
   load File.expand_path(entry)
+
+when 'package'
+  entry = ['app.rb', 'lib/app.rb'].find { |f| File.exist?(f) }
+  abort 'No app.rb found. Run `zuzu package` from your app directory.' unless entry
+
+  # Copy warble.rb from zuzu source if not already present
+  warble_config = 'warble.rb'
+  unless File.exist?(warble_config)
+    src = File.expand_path('../warble.rb', __dir__)
+    if File.exist?(src)
+      FileUtils.cp(src, warble_config)
+      puts "Copied warble.rb from zuzu source."
+    else
+      abort 'warble.rb not found. Please add it to your app directory.'
+    end
+  end
+
+  # Ensure warbler gem is available
+  warble_bin = `which warble 2>/dev/null`.strip
+  if warble_bin.empty?
+    puts 'Installing warbler gem...'
+    system('gem install warbler') || abort('Failed to install warbler.')
+    warble_bin = `which warble 2>/dev/null`.strip
+    abort 'warble binary not found after install. Try: gem install warbler' if warble_bin.empty?
+  end
+
+  # Warbler 2.x auto-discovers the main script from bin/ — create a thin launcher
+  unless File.exist?('bin/app')
+    FileUtils.mkdir_p('bin')
+    File.write('bin/app', <<~SCRIPT)
+      #!/usr/bin/env jruby
+      load File.expand_path('../app.rb', __dir__)
+    SCRIPT
+    File.chmod(0o755, 'bin/app')
+    puts 'Created bin/app launcher for warbler.'
+  end
+
+  puts 'Packaging app as zuzu-app.jar ...'
+  puts '  (this may take a minute)'
+  success = Bundler.with_unbundled_env { system(warble_bin, 'jar') }
+  if success
+    puts ''
+    jar = Dir['*.jar'].first || 'app.jar'
+    puts "Done! Created: #{jar}"
+    puts ''
+    puts 'Run it with:'
+    puts "  java -XstartOnFirstThread -jar #{jar}   # macOS"
+    puts "  java -jar #{jar}                        # Linux / Windows"
+  else
+    abort 'warble jar failed. Check output above for details.'
+  end
 
 when 'console'
   require 'irb'
