@@ -33,10 +33,12 @@ when 'new'
   app_dir = File.expand_path(app_name)
   abort "Directory '#{app_name}' already exists." if File.exist?(app_dir)
 
-  template_src = File.expand_path('../templates/app.rb', __dir__)
+  templates_dir = File.expand_path('../templates', __dir__)
 
   FileUtils.mkdir_p(app_dir)
-  FileUtils.cp(template_src, File.join(app_dir, 'app.rb'))
+  FileUtils.cp(File.join(templates_dir, 'app.rb'),    File.join(app_dir, 'app.rb'))
+  FileUtils.cp(File.join(templates_dir, 'AGENTS.md'), File.join(app_dir, 'AGENTS.md'))
+  FileUtils.cp(File.join(templates_dir, 'CLAUDE.md'), File.join(app_dir, 'CLAUDE.md'))
 
   # Generate Gemfile — uses local path when running from source tree,
   # published gem when installed via `gem install zuzu`.
@@ -55,6 +57,8 @@ when 'new'
   puts "Created new Zuzu app: #{app_name}/"
   puts "  #{app_name}/app.rb"
   puts "  #{app_name}/Gemfile"
+  puts "  #{app_name}/AGENTS.md"
+  puts "  #{app_name}/CLAUDE.md"
   puts ''
   if DEV_MODE
     puts "  (dev mode: Gemfile points to #{ZUZU_ROOT})"
