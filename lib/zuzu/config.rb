@@ -13,7 +13,7 @@ module Zuzu
     attr_accessor :port, :model, :channels, :log_level, :app_name,
                   :window_width, :window_height, :system_prompt_extras
 
-    attr_reader :db_path, :llamafile_path
+    attr_reader :db_path
 
     def initialize
       @port           = 8080
@@ -36,6 +36,28 @@ module Zuzu
 
     def llamafile_path=(path)
       @llamafile_path = path ? File.expand_path(path) : path
+    end
+
+    # When running as a jpackage native executable, the model is NOT bundled
+    # in the app. Instead it lives in the platform user-data directory and its
+    # filename is injected via the `-Dzuzu.model=<filename>` JVM property set
+    # by jpackage at build time.
+    def llamafile_path
+      if defined?(Java) &&
+         (model_name = Java::JavaLang::System.getProperty('zuzu.model')) &&
+         !model_name.empty?
+        data_dir = case RbConfig::CONFIG['host_os']
+                   when /darwin/
+                     File.join(Dir.home, 'Library', 'Application Support', @app_name || 'Zuzu')
+                   when /mswin|mingw/
+                     File.join(ENV.fetch('APPDATA', Dir.home), @app_name || 'Zuzu')
+                   else
+                     File.join(Dir.home, '.local', 'share', @app_name || 'Zuzu')
+                   end
+        File.join(data_dir, 'models', model_name)
+      else
+        @llamafile_path
+      end
     end
   end
 

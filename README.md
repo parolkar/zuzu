@@ -10,7 +10,7 @@ LLMs are simply a more expressive interface for exactly that orchestration. Zuzu
 
 - **Privacy by architecture.** The agent operates inside AgentFS — a sandboxed virtual filesystem backed by a single SQLite file. It cannot touch the host OS unless you explicitly open that door. There is no network call to make, no token to rotate, no terms of service that changes next quarter.
 
-- **Deployable like software, not like a service.** Package your app as a single `.jar`. Users pay, download, double-click, and run. No Docker. No cloud subscription. No infrastructure to maintain. The JVM handles cross-platform distribution the way it has for 30 years.
+- **Deployable like software, not like a service.** Package your app as a single `.jar` — or go further with `zuzu package` and produce a native installer (`.dmg`/`.app` on macOS, `.deb` on Linux, `.exe` on Windows) that bundles a minimal JRE via jlink. Users download, double-click, and run. No Java pre-installed. No Docker. No cloud subscription. No infrastructure to maintain.
 
 - **Built for regulated environments.** A therapist keeping session notes, an auditor running confidential analysis, a corporate team in a restricted environment — these are exactly the users who benefit most from powerful AI but are currently blocked by cloud dependency. A bundled LLM in a self-contained Java application needs no external approval to run.
 
@@ -311,6 +311,32 @@ java -jar my_app.jar                        # Linux / Windows
 
 > **Note:** Place your llamafile model in a `models/` directory alongside the
 > `.jar` — models are not bundled into the archive.
+
+### Packaging as a native installer (no Java required for users)
+
+After building the JAR, `zuzu package` asks if you want to go further:
+
+```
+Bundle into a self-contained native executable? (no Java required for users) [y/N]:
+```
+
+Type `y` and Zuzu uses **jpackage** (bundled with JDK 21+) to produce a native
+installer that includes a minimal JRE — users never need to install Java:
+
+| Platform | Output |
+|----------|--------|
+| macOS | `.dmg` with a drag-to-Applications `.app` |
+| Linux | `.deb` package |
+| Windows | `.exe` installer |
+
+The model file is not bundled (it can be gigabytes). After installing, users
+place it in the platform user-data directory that Zuzu prints at build time:
+
+```
+macOS:   ~/Library/Application Support/<AppName>/models/<model>.llamafile
+Linux:   ~/.local/share/<AppName>/models/<model>.llamafile
+Windows: %APPDATA%\<AppName>\models\<model>.llamafile
+```
 
 ---
 

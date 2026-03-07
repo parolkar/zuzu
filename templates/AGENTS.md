@@ -451,6 +451,8 @@ Log line: `[zuzu] loop detected for <tool_name>, breaking`
 
 ## Packaging
 
+### Step 1 — Build the JAR
+
 ```bash
 bundle exec zuzu package
 ```
@@ -461,11 +463,41 @@ bundle exec zuzu package
 - Path resolution: `__dir__` inside a jar returns `uri:classloader:/` —
   app.rb already handles this with the `base` variable pattern
 
-Run the jar:
+Run the jar (requires Java 21+ installed):
 ```bash
 java -XstartOnFirstThread -jar my_app.jar   # macOS (SWT requires first thread)
 java -jar my_app.jar                        # Linux / Windows
 ```
+
+### Step 2 — Build a native installer (optional, no Java required for users)
+
+After the JAR is built, `zuzu package` prompts:
+
+```
+Bundle into a self-contained native executable? (no Java required for users) [y/N]:
+```
+
+Type `y`. Zuzu uses **jpackage** (included with JDK 21+) to bundle a minimal JRE
+via jlink and produce a platform-native installer:
+
+| Platform | Output in `dist/` |
+|----------|-------------------|
+| macOS | `.dmg` — drag-to-Applications `.app` bundle |
+| Linux | `.deb` package |
+| Windows | `.exe` installer |
+
+The model file cannot be bundled (too large). Zuzu injects the model filename as
+the `-Dzuzu.model` JVM property. At runtime, `Zuzu::Config#llamafile_path` resolves
+it from the platform user-data directory automatically:
+
+```
+macOS:   ~/Library/Application Support/<AppName>/models/<model>.llamafile
+Linux:   ~/.local/share/<AppName>/models/<model>.llamafile
+Windows: %APPDATA%\<AppName>\models\<model>.llamafile
+```
+
+`zuzu package` prints the exact path — tell your users to place the model there
+before launching the installed app.
 
 ---
 

@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   s.authors     = ['Abhishek Parolkar']
   s.email       = ['abhishek@parolkar.com']
   s.homepage    = 'https://github.com/parolkar/zuzu'
-  s.summary     = 'JRuby framework for AI-native desktop apps — local LLM, single .jar distribution, Claude Code-ready scaffolding.'
+  s.summary     = 'JRuby framework for AI-native desktop apps — local LLM, single .jar/.dmg/.exe/.deb distribution, Claude Code-ready scaffolding. SQLite-backed AgentFS as a sandboxed virtual filesystem for the agent. No cloud required.'
   s.description = \
     'Every installed application is an orchestrator of OS capabilities. ' \
     'LLMs are simply a more expressive interface for that orchestration. ' \
@@ -17,7 +17,9 @@ Gem::Specification.new do |s|
     'It uses JRuby and Glimmer DSL for SWT for the GUI, Mozilla\'s llamafile for ' \
     'local LLM inference, and SQLite (via AgentFS) as a sandboxed virtual filesystem ' \
     'the agent can read and write without touching the host OS. ' \
-    'Apps package as a single cross-platform .jar — users download, double-click, run. ' \
+    'Apps ship as a cross-platform .jar, or as a native installer (.dmg/.deb/.exe) ' \
+    'with a JRE bundled via jpackage — users download, double-click, and run ' \
+    'with no Java installation required. ' \
     'No cloud. No subscriptions. No infrastructure to operate. ' \
     'Scaffolded projects include CLAUDE.md and Claude Code skills pre-tuned to ' \
     'Zuzu\'s patterns, so coding agents generate correct framework code from the start.'

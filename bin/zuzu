@@ -125,16 +125,106 @@ when 'package'
   puts 'Packaging app as zuzu-app.jar ...'
   puts '  (this may take a minute)'
   success = Bundler.with_unbundled_env { system(warble_bin, 'jar') }
-  if success
-    puts ''
-    jar = Dir['*.jar'].first || 'app.jar'
-    puts "Done! Created: #{jar}"
-    puts ''
-    puts 'Run it with:'
-    puts "  java -XstartOnFirstThread -jar #{jar}   # macOS"
-    puts "  java -jar #{jar}                        # Linux / Windows"
+  abort 'warble jar failed. Check output above for details.' unless success
+
+  jar = Dir['*.jar'].first || 'app.jar'
+  puts ''
+  puts "Done! Created: #{jar}"
+  puts ''
+  puts 'Run it with:'
+  puts "  java -XstartOnFirstThread -jar #{jar}   # macOS"
+  puts "  java -jar #{jar}                        # Linux / Windows"
+  puts ''
+
+  # ── jpackage: optional self-contained native executable ─────────────────
+  # jpackage (JDK 14+) bundles a minimal JRE via jlink so users don't need
+  # Java pre-installed. Model files can't be bundled — they're resolved from
+  # the platform user-data directory at runtime via the zuzu.model JVM property.
+
+  jpackage_bin = `which jpackage 2>/dev/null`.strip
+  if jpackage_bin.empty?
+    puts 'Tip: Install JDK 21+ to create a self-contained executable (no Java required for users).'
   else
-    abort 'warble jar failed. Check output above for details.'
+    print 'Bundle into a self-contained native executable? (no Java required for users) [y/N]: '
+    $stdout.flush
+    answer = $stdin.gets.to_s.strip.downcase
+
+    if answer == 'y' || answer == 'yes'
+      # ── detect / ask for model filename ───────────────────────────────────
+      model_files = Dir['models/*.llamafile']
+      model_name = if model_files.length == 1
+                     puts "Using model: #{File.basename(model_files.first)}"
+                     File.basename(model_files.first)
+                   elsif model_files.length > 1
+                     puts 'Model files found in models/:'
+                     model_files.each { |f| puts "  #{File.basename(f)}" }
+                     print 'Enter model filename: '
+                     $stdout.flush
+                     $stdin.gets.to_s.strip
+                   else
+                     print 'Enter model filename (e.g. llava-v1.5-7b-q4.llamafile): '
+                     $stdout.flush
+                     $stdin.gets.to_s.strip
+                   end
+      abort 'No model filename provided.' if model_name.to_s.empty?
+
+      print 'App version [1.0.0]: '
+      $stdout.flush
+      version_input = $stdin.gets.to_s.strip
+      app_version = version_input.empty? ? '1.0.0' : version_input
+
+      app_name = File.basename(Dir.pwd).gsub(/[^a-zA-Z0-9._-]/, '-')
+
+      platform = RbConfig::CONFIG['host_os']
+      pkg_type  = case platform
+                  when /darwin/ then 'dmg'
+                  when /linux/  then 'deb'
+                  else               'exe'
+                  end
+
+      FileUtils.mkdir_p('dist')
+
+      java_opts = [
+        '--enable-native-access=ALL-UNNAMED',
+        "-Dzuzu.model=#{model_name}"
+      ]
+      java_opts << '-XstartOnFirstThread' if platform =~ /darwin/
+
+      jpackage_args = [
+        jpackage_bin,
+        '--type',        pkg_type,
+        '--name',        app_name,
+        '--app-version', app_version,
+        '--input',       '.',
+        '--main-jar',    jar,
+        '--main-class',  'org.jruby.JarBootstrapMain',
+        '--dest',        'dist'
+      ]
+      java_opts.each { |opt| jpackage_args.push('--java-options', opt) }
+
+      puts ''
+      puts "Building native #{pkg_type.upcase} installer with jpackage..."
+      puts '  (this may take a minute)'
+      native_ok = system(*jpackage_args)
+
+      if native_ok
+        puts ''
+        puts 'Done! Native installer created in dist/'
+        pkg_file = Dir["dist/*.#{pkg_type}"].first
+        puts "  #{pkg_file}" if pkg_file
+        puts ''
+        puts 'Important — place your model file at:'
+        model_dest = case platform
+                     when /darwin/ then "  ~/Library/Application\\ Support/#{app_name}/models/#{model_name}"
+                     when /linux/  then "  ~/.local/share/#{app_name}/models/#{model_name}"
+                     else               "  %APPDATA%\\#{app_name}\\models\\#{model_name}"
+                     end
+        puts model_dest
+        puts '  (create the directory if it does not exist)'
+      else
+        warn 'jpackage failed. Check output above for details.'
+      end
+    end
   end
 
 when 'console'

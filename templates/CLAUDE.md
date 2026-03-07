@@ -53,9 +53,21 @@ What would you like to build today?
 ```bash
 bundle exec zuzu start      # launch the app
 bundle exec zuzu console    # IRB with Zuzu loaded — test tools interactively
-bundle exec zuzu package    # build standalone .jar
+bundle exec zuzu package    # build standalone .jar, then optionally a native installer
 bundle install              # sync gems after Gemfile changes
 ```
+
+### Distribution tiers
+
+| Command | Output | User requirement |
+|---------|--------|-----------------|
+| `zuzu package` → JAR only | `<app>.jar` | Java 21+ installed |
+| `zuzu package` → native (type `y` at prompt) | `.dmg` / `.deb` / `.exe` in `dist/` | Nothing — JRE bundled |
+
+For the native installer, the model file is NOT bundled. After install, users place it at:
+- **macOS:** `~/Library/Application Support/<AppName>/models/<model>.llamafile`
+- **Linux:** `~/.local/share/<AppName>/models/<model>.llamafile`
+- **Windows:** `%APPDATA%\<AppName>\models\<model>.llamafile`
 
 ## Core rules — always enforce these
 
